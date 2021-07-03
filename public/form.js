@@ -11,6 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return
         }
 
-        axios.post('/form', { name, email })
+        axios.post('/form', { name, email }).then(() => {
+            for (const item of document.querySelectorAll('main *')) {
+                item.remove()
+            }
+
+            const p = document.createElement('p')
+            const text = document.createTextNode('Success !!')
+            p.appendChild(text)
+
+            document.querySelector('main').appendChild(p)
+        })
     })
 })

@@ -1,20 +1,19 @@
 require('dotenv').config()
 const express = require('express')
 const { check } = require('express-validator')
-const app = express()
-
 const Airtable = require('airtable')
-
-app.use(express.json())
-app.use(express.static('public'))
+const app = express()
 
 Airtable.configure({
     apiKey: process.env.AIRTABLE_API_KEY
 })
 
-const base = Airtable.base(process.env.AIRTABLE_BASE_NAME)
+// const base = Airtable.base(process.env.AIRTABLE_BASE_NAME)
+const base = require('airtable').base("Email Newsletter Signups")
 const table = base(process.env.AIRTABLE_TABLE_NAME)
 
+app.use(express.json())
+app.use(express.static('public'))
 
 app.get('/', (request, response) => {
     response.sendFile(__dirname + '/views/index.html')
