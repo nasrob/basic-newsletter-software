@@ -67,4 +67,26 @@ app.get('/admin', (req, res) => {
     }
 })
 
+app.get('/admin/reset', (req, res) => {
+    try {
+        if (fs.existsSync(initializedFile)) {
+            verifyJWT(req.cookies.token).then(decodedToken => {
+                fs.unlink(initializedFile, err => {
+                    if (err) {
+                        console.error('Error removing the file')
+                        res.status(500).end()
+                    }
+                    res.send('Session ended')
+                })
+            }).catch(err => {
+                res.status(400).json({message: 'Invalid auth token provided.'})
+            })
+        } else {
+            res.status(500).json({message: 'No session started'})
+        }
+    } catch (err) {
+        console.error(err)
+    }
+})
+
 app.listen(3000, () => console.log('Server Ready'))
