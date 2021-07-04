@@ -6,6 +6,7 @@ const fs = require('fs')
 const { createJWT, verifyJWT } = require('./auth')
 const cookieParser = require('cookie-parser')
 const ta = require('time-ago')
+const nodemailer = require('nodemailer')
 
 const app = express()
 
@@ -142,9 +143,51 @@ const getEmails = async () => {
 }
 
 app.post('/send', (req, res) => {
-    const content = req.body.content
-    console.log(content)
-    res.end()
+    const body = req.body.content
+    const subject = 'Newsletter from me'
+
+    getEmails().then(emails => {
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: true,
+            auth: {
+                user: process.env.SMTP_USERNAME,
+                pass: process.env.SMTP_PASSWORD
+            }
+        })
+
+        const sleep = (milliseconds) => {
+            return new Promise(resolve => setTimeout(resolve, milliseconds))
+        }
+
+        const sendEmail = (mailOptions, i, emails, res) => {
+            if (i === emails.length) {
+                res.end()
+                return
+            }
+
+            mailOptions.to = emails[i].email
+
+            transporter.sendMail(mailOptions, (err, info) => {
+                if (err) {
+                    console.warn(err)
+                } else {
+                    // email sent
+                    sleep(500).then(() => {
+                        sendEmail(mailOptions, ++i, emails, res)
+                    })
+                }
+            })
+        }
+
+        const mailOptions = {
+            from: process.env.FROM_EMAIL,
+            subject: subject,
+            html: body
+        }
+        sendEmail(mailOptions, 0, emails, res)
+    })
 })
 
 app.listen(3000, () => console.log('Server Ready'))
