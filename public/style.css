@@ -29,3 +29,25 @@ input[type=submit]:hover {
     color: white;
 }
 
+table {
+    padding: 30px;
+    width: 100%;
+    -webkit-border-horizontal-spacing: 0px;
+    -webkit-border-vertical-spacing: 0px;
+}
+
+tr:nth-child(odd) {
+    background-color: lightblue;
+}
+
+td {
+    padding: 8px;
+}
+
+.pell-content {
+    text-align: left;
+}
+
+button#send {
+    margin-top: 15px;
+}

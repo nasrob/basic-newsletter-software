@@ -5,6 +5,8 @@ const Airtable = require('airtable')
 const fs = require('fs')
 const { createJWT, verifyJWT } = require('./auth')
 const cookieParser = require('cookie-parser')
+const ta = require('time-ago')
+
 const app = express()
 
 Airtable.configure({
@@ -14,6 +16,8 @@ Airtable.configure({
 // const base = Airtable.base(process.env.AIRTABLE_BASE_NAME)
 const base = require('airtable').base("Email Newsletter Signups")
 const table = base(process.env.AIRTABLE_TABLE_NAME)
+
+app.set('view engine', 'pug')
 
 app.use(express.json())
 app.use(express.static('public'))
@@ -52,7 +56,10 @@ app.get('/admin', (req, res) => {
     if (fs.existsSync(initializedFile)) {
         // admin auth already initialized
         verifyJWT(req.cookies.token).then(decodedToken => {
-            res.sendFile(__dirname + '/views/admin.html')
+            getEmails().then(emails => {
+                res.render(__dirname + '/views/admin.pug', { emails: emails })
+                res.end()
+            })
         }).catch(err => res.status(400).json({ message: 'Invalid auth token provided.'}))
     } else {
         // admin auth not initialized
@@ -63,7 +70,10 @@ app.get('/admin', (req, res) => {
         fs.closeSync(fs.openSync('./.data/initialized', 'w'))
 
         res.cookie('token', token, { httpOnly: true, /*secure: true*/ })
-        res.sendFile(__dirname + '/views/admin.html')
+        getEmails().then(emails => {
+            res.render(__dirname + '/views/admin.pug', { emails: emails })
+            res.end()
+        })
     }
 })
 
@@ -87,6 +97,54 @@ app.get('/admin/reset', (req, res) => {
     } catch (err) {
         console.error(err)
     }
+})
+
+let records = []
+
+const getAirtableRecords = () => {
+    return new Promise((resolve, reject) => {
+        // return cached results if called multiple times
+        if (records.length > 0) {
+            resolve(records)
+        }
+
+        // called for every page of records
+        const processPage = (partialRecords, fetchNextPage) => {
+            records = [...records, ...partialRecords]
+            fetchNextPage()
+        }
+
+        // called when all the records have been retrieved
+        const processRecords = err => {
+            if (err) {
+                console.error(err)
+                return
+            }
+
+            resolve(records)
+        }
+
+        table.select({ view: process.env.VIEW_NAME })
+            .eachPage(processPage, processRecords)
+    })
+}
+
+const getEmails = async () => {
+    records = []
+    const emails = await getAirtableRecords()
+    return emails.map(record => {
+        return {
+            'email': record.get('Email'),
+            'name': record.get('Name'),
+            'date': ta.ago(record.get('Date'))
+        }
+    })
+}
+
+app.post('/send', (req, res) => {
+    const content = req.body.content
+    console.log(content)
+    res.end()
 })
 
 app.listen(3000, () => console.log('Server Ready'))

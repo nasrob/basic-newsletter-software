@@ -1,0 +1,31 @@
+hmtl
+    head
+        meta(charset='utf-8')
+        meta(http-equiv='X-UA-Compatible', content='IE=edge')
+        meta(name='viewport', content='width=device-width, initial-scale=1')
+        link(rel="stylesheet", href="../public/style.css")
+        link(rel='stylesheet', href='https://unpkg.com/pell/dist/pell.min.css')
+    body 
+        main 
+            h1 List Of Emails 
+
+            table 
+                for entry in emails
+                    tr 
+                        td #{entry.name}
+                        td #{entry.email}
+                        td #{entry.date}
+
+        h2 Compose email
+
+        div#editor.pell
+
+            //- the existing content
+
+        button#send Send Email
+        hr
+
+    //- at the end
+    script(src="https://unpkg.com/pell")
+    script(src="/editors.js")
+    script(src='https://unpkg.com/axios/dist/axios.min.js')
